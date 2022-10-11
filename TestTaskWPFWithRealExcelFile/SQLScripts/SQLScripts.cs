@@ -1,14 +1,8 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
 using System.Windows;
-
-///В чем суть?
-///в зависимости от наполнения базы менется суть запросов
-///мы либо достаем все объекты а разные из разных таблиц одной базы, 
-///либо делаем запросы в зависимости от уровня приоритета.
 
 namespace SqlConn
 {
@@ -31,6 +25,67 @@ namespace SqlConn
 
     class SQLScripts
     {
+        public static void Conn()
+        {
+            MySqlConnection conn = DBUtils.GetDBConnection();
+            conn.Open();
+            string sql = $"SET SESSION transaction ISOLATION LEVEL repeatable read; START TRANSACTION;"; //удаляет все записи и заодно обнуляет автоинкремент id
+
+            MySqlCommand cmd = new MySqlCommand
+            {
+                Connection = conn,
+                CommandText = sql
+            };
+            cmd.ExecuteReader();
+        }
+
+
+        public static void ConnСheck()
+        {
+            MySqlConnection conn = DBUtils.GetDBConnection();
+            try
+            {
+                conn.Open();
+                //string sql = $"SHOW TABLES LIKE 'matrixarray';"; //удаляет все записи и заодно обнуляет автоинкремент id
+                string sql = "select * from `matrixarray` limit 1"; //проверка существует ли база данных
+                MySqlCommand cmd = new MySqlCommand
+                {
+                    Connection = conn,
+                    CommandText = sql
+                };
+                cmd.ExecuteReader();
+            }
+            catch (Exception)
+            {
+                string messageBoxText = "База данных не найдена";
+                string caption = "Ошибка подключения";
+                MessageBoxButton button = MessageBoxButton.OK;
+                MessageBoxImage icon = MessageBoxImage.Error;
+                MessageBoxResult result;
+                result = MessageBox.Show(messageBoxText, caption, button, icon, MessageBoxResult.Yes);
+            }
+            finally
+            {
+                conn.Close();
+                conn.Dispose();
+            }
+        }
+
+        public static void ConnClose()
+        {
+            MySqlConnection conn = DBUtils.GetDBConnection();
+            string sql = $"Commit;";
+
+            MySqlCommand cmd = new MySqlCommand
+            {
+                Connection = conn,
+                CommandText = sql
+            };
+            cmd.ExecuteReader();
+            conn.Close();
+            conn.Dispose();
+        }
+
         /// <summary>
         /// Заполняет левую верхнюю ячейку
         /// </summary>
@@ -45,7 +100,11 @@ namespace SqlConn
             try
             {
                 conn.Open();
-                string sql =  $"SELECT * FROM  matrixarray WHERE normOfTime >= '{((float)time).ToString()}' AND debit >= '{((float)debit).ToString()}';"; //удаляет все записи и заодно обнуляет автоинкремент id
+                string sql =  $"SET SESSION transaction ISOLATION LEVEL REPEATABLE READ; START TRANSACTION;" +
+                    $"SELECT * FROM  matrixarray " +
+                    $"WHERE normOfTime >= '{((float)time).ToString().Replace(",",".")}' " +
+                            $"AND debit >= '{((float)debit).ToString().Replace(",",".")}' " +
+                    $"ORDER BY normOfTime DESC, debit DESC;"; 
 
                 MySqlCommand cmd = new MySqlCommand
                 {
@@ -70,17 +129,17 @@ namespace SqlConn
                       
                     }
                 }
+                 sql = $"Commit;"; //завершаем транзакцию
+
+                cmd = new MySqlCommand
+                {
+                    Connection = conn,
+                    CommandText = sql
+                };
+                cmd.ExecuteReader();
             }
             catch (Exception)
             {
-                //Console.WriteLine("Не удалось загрузить данные данные" + ex);
-                string messageBoxText = "Не удалось выполнить запрос к базе данных MySQL";
-                string caption = "Ошибка подключения";
-                MessageBoxButton button = MessageBoxButton.OK;
-                MessageBoxImage icon = MessageBoxImage.Error;
-                MessageBoxResult result;
-                result = MessageBox.Show(messageBoxText, caption, button, icon, MessageBoxResult.Yes);
-                //MessageBox.Show("Не удалось загрузить данные данные");
             }
             finally
             {
@@ -104,7 +163,11 @@ namespace SqlConn
             try
             {
                 conn.Open();
-                string sql = $"SELECT * FROM matrixarray WHERE normOfTime < '{((float)time).ToString()}' AND debit >= '{((float)debit).ToString()}';"; //удаляет все записи и заодно обнуляет автоинкремент id
+                //можно было бы сделать одну функцию, в которую передавали бы и знак неравенства в cmd
+                string sql = $"SET SESSION transaction ISOLATION LEVEL REPEATABLE READ; START TRANSACTION;" + 
+                    $"SELECT * FROM matrixarray" +
+                    $" WHERE normOfTime < '{((float)time).ToString().Replace(",", ".")}' AND debit >= '{((float)debit).ToString().Replace(",", ".")}' " +
+                    $"ORDER BY normOfTime DESC, debit DESC;"; 
 
                 MySqlCommand cmd = new MySqlCommand
                 {
@@ -129,17 +192,18 @@ namespace SqlConn
 
                     }
                 }
+
+                sql = $"Commit;"; 
+
+                cmd = new MySqlCommand
+                {
+                    Connection = conn,
+                    CommandText = sql
+                };
+                cmd.ExecuteReader();
             }
             catch (Exception)
             {
-                //Console.WriteLine("Не удалось загрузить данные данные" + ex);
-                string messageBoxText = "Не удалось выполнить запрос к базе данных MySQL";
-                string caption = "Ошибка подключения";
-                MessageBoxButton button = MessageBoxButton.OK;
-                MessageBoxImage icon = MessageBoxImage.Error;
-                MessageBoxResult result;
-                result = MessageBox.Show(messageBoxText, caption, button, icon, MessageBoxResult.Yes);
-                //MessageBox.Show("Не удалось загрузить данные данные");
             }
             finally
             {
@@ -163,8 +227,11 @@ namespace SqlConn
             try
             {
                 conn.Open();
-                string sql = $"SELECT * FROM  matrixarray WHERE normOfTime >= '{((float)time).ToString()}' AND debit < '{((float)debit).ToString()}';"; //удаляет все записи и заодно обнуляет автоинкремент id
-
+                string sql = $"SET SESSION transaction ISOLATION LEVEL REPEATABLE READ; START TRANSACTION;" + 
+                    $"SELECT * FROM  matrixarray " +
+                    $"WHERE normOfTime >= '{((float)time).ToString().Replace(",", ".")}' AND debit < '{((float)debit).ToString().Replace(",", ".")}' " +
+                    $"ORDER BY normOfTime DESC, debit DESC;"; //удаляет все записи и заодно обнуляет автоинкремент id
+                //ORDER BY normOfTime DESC, debit DESC
                 MySqlCommand cmd = new MySqlCommand
                 {
                     Connection = conn,
@@ -188,17 +255,18 @@ namespace SqlConn
 
                     }
                 }
+
+                sql = $"Commit;"; //удаляет все записи и заодно обнуляет автоинкремент id
+
+                cmd = new MySqlCommand
+                {
+                    Connection = conn,
+                    CommandText = sql
+                };
+                cmd.ExecuteReader();
             }
             catch (Exception)
             {
-                //Console.WriteLine("Не удалось загрузить данные данные" + ex);
-                string messageBoxText = "Не удалось выполнить запрос к базе данных MySQL";
-                string caption = "Ошибка подключения";
-                MessageBoxButton button = MessageBoxButton.OK;
-                MessageBoxImage icon = MessageBoxImage.Error;
-                MessageBoxResult result;
-                result = MessageBox.Show(messageBoxText, caption, button, icon, MessageBoxResult.Yes);
-                //MessageBox.Show("Не удалось загрузить данные данные");
             }
             finally
             {
@@ -222,7 +290,10 @@ namespace SqlConn
             try
             {
                 conn.Open();
-                string sql = $"SELECT * FROM  matrixarray WHERE normOfTime < '{((float)time).ToString()}' AND debit < '{((float)debit).ToString()}';"; //удаляет все записи и заодно обнуляет автоинкремент id
+                string sql = $"SET SESSION transaction ISOLATION LEVEL REPEATABLE READ; START TRANSACTION;" + 
+                    $"SELECT * FROM  matrixarray " +
+                    $"WHERE normOfTime < '{((float)time).ToString().Replace(",", ".")}' AND debit < '{((float)debit).ToString().Replace(",", ".")}' " +
+                    $"ORDER BY normOfTime DESC, debit DESC;"; //удаляет все записи и заодно обнуляет автоинкремент id
 
                 MySqlCommand cmd = new MySqlCommand
                 {
@@ -247,17 +318,18 @@ namespace SqlConn
 
                     }
                 }
+
+                sql = $"Commit;"; //удаляет все записи и заодно обнуляет автоинкремент id
+
+                cmd = new MySqlCommand
+                {
+                    Connection = conn,
+                    CommandText = sql
+                };
+                cmd.ExecuteReader();
             }
             catch (Exception)
             {
-                //Console.WriteLine("Не удалось загрузить данные данные" + ex);
-                string messageBoxText = "Не удалось выполнить запрос к базе данных MySQL";
-                string caption = "Ошибка подключения";
-                MessageBoxButton button = MessageBoxButton.OK;
-                MessageBoxImage icon = MessageBoxImage.Error;
-                MessageBoxResult result;
-                result = MessageBox.Show(messageBoxText, caption, button, icon, MessageBoxResult.Yes);
-                //MessageBox.Show("Не удалось загрузить данные данные");
             }
             finally
             {

@@ -1,7 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Configuration;
-using System.Data.SqlClient;
 
 namespace SqlConn
 {

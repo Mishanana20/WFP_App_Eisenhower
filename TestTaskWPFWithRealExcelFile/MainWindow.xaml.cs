@@ -1,20 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Google.Protobuf.WellKnownTypes;
 using SqlConn;
 
 namespace TestTaskWPF
@@ -24,7 +11,6 @@ namespace TestTaskWPF
     /// </summary>
     public partial class MainWindow : Window
     {
-
         double debit = 0;
         double time = 0;
         public MainWindow()
@@ -33,11 +19,12 @@ namespace TestTaskWPF
             time = Convert.ToDouble(ConfigurationManager.AppSettings.Get("time"));
 
             InitializeComponent();
+            SQLScripts.ConnСheck(); //для выброса мсжБокса о доступности БД
 
             Loaded += MainWindow_Loaded;
             System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
             dispatcherTimer.Tick += new EventHandler(dispatcherTimer_Tick);
-            dispatcherTimer.Interval = new TimeSpan(0, 0, 5);
+            dispatcherTimer.Interval = new TimeSpan(0, 0, 17);
             dispatcherTimer.Start();
         }
 
@@ -54,10 +41,11 @@ namespace TestTaskWPF
         private void LoadToWPFLists()
         {
             List<MyTable> result = new List<MyTable>();
-            List<lbMainList> resultList = new List<lbMainList>();
+            List<lbMainList> resultList = new List<lbMainList>(); //иначе бы wpf ссылался бы на одни список
             List<lbMainList> resultList2 = new List<lbMainList>();
             List<lbMainList> resultList3 = new List<lbMainList>();
             List<lbMainList> resultList4 = new List<lbMainList>();
+
             resultList.Clear();
             result.Clear();
             result.AddRange(SQLScripts.SelectMostImportantTask(debit, time));

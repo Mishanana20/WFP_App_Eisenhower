@@ -8,22 +8,6 @@
         Title="Таблица Приоритетов" Height="650" Width="700"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
-        <DataTemplate x:Key="DataTemplate_Level2">
-            <ScrollViewer x:Name="scrollField"
-                              HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <Button Content="{Binding}" Height="Auto" Width="Auto" Margin="4,4,4,4"/>
-            </ScrollViewer>
-        </DataTemplate>
-
-        <DataTemplate x:Key="DataTemplate_Level1">
-            <ItemsControl ItemsSource="{Binding}" ItemTemplate="{DynamicResource DataTemplate_Level2}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Vertical"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
-        </DataTemplate>
 
     </Window.Resources>
 
